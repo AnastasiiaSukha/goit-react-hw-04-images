@@ -1,7 +1,9 @@
 import React, { Component } from "react";
 import Searchbar from "./Searchbar/Searchbar";
 import { getImages } from "./services/api";
-import ImageGallery from "./ImageGallery/ImageGallery";
+import { ImageGallery } from "./ImageGallery/ImageGallery";
+import { Button } from "./Button/Button";
+import { Loader } from "./Loader/Loader.js";
 
 
 
@@ -12,15 +14,16 @@ export default class App extends Component {
     pictures: [],
     page:1,
     isLoading: false,
-    status: 'idle',
+    error:'',
+    status: 'idle'
   }
 
-
+ 
   async componentDidUpdate(_, prevState) {
     const { search, page } = this.state;
 
     if (search !== prevState.search|| page !== prevState.page) {
-      this.setState({ status: 'pending' });
+      this.setState({ status: 'pending', isLoading: true});
 
       try {
         const response = await getImages(search, page);
@@ -28,35 +31,61 @@ export default class App extends Component {
         if (response.total === 0) {
           alert('Sorry, no results matching your request');
           this.setState({ pictures: [] });
-          throw new Error();
         }
 
         this.setState(prevState => ({
           status: 'resolved',
-          images: [...prevState.images, ...response.hits],
+          pictures: [...prevState.pictures, ...response.hits],
         }));
       } catch (error) {
-        this.setState({ status: 'rejected' });
+        this.setState({ status: 'rejected', error: 'Sorry, something happened, please try again later' });
       }
     }
   }
 
 
-  handleInput = text => {
-
+  handleSubmit = text => {
     this.setState({
+      page:1,
       search: text,
+      pictures:[],
+
     })
   }
 
-  render() {
-    return (
+  loadMore = () => {
+    this.setState(prevState => ({
+      page: prevState.page + 1,
+    }));
+  };
+  
 
-      <div>
-        <Searchbar onSubmit={this.handleInput} />
-        <ImageGallery search={this.state.search} />
+  render() {
+    const { pictures, status, error } = this.state;
+
+    if (status === 'idle') {
+      return <Searchbar onSubmit={this.handleSubmit} />
+    }
+    
+    if (status === 'pending') {
+      return <Loader/>
+    }
+ 
+    if (status === 'rejected') {
+      return console.log(error)
+    }
+
+    if (status === 'resolved') {
+      return (<div>
+        <Searchbar onSubmit={this.handleSubmit}/>
+        <ImageGallery pictures={pictures} />
+        <Button onLoadMore={this.loadMore}/>
       </div>
-    )
+        
+      );
+    }
+
+    
   }
 
 };
