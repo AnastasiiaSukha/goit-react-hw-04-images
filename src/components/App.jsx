@@ -4,6 +4,10 @@ import { getImages } from "./services/api";
 import { ImageGallery } from "./ImageGallery/ImageGallery";
 import { Button } from "./Button/Button";
 import { Loader } from "./Loader/Loader.js";
+import { Container } from "App.styled";
+import Modal from "./Modal/Modal";
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 
 
@@ -15,12 +19,15 @@ export default class App extends Component {
     page:1,
     isLoading: false,
     error:'',
-    status: 'idle'
+    status: 'idle',
+    imageLink: null,
   }
 
+  notify = () => toast("Sorry, there is no images with this name!");
  
   async componentDidUpdate(_, prevState) {
     const { search, page } = this.state;
+
 
     if (search !== prevState.search|| page !== prevState.page) {
       this.setState({ status: 'pending', isLoading: true});
@@ -29,7 +36,7 @@ export default class App extends Component {
         const response = await getImages(search, page);
 
         if (response.total === 0) {
-          alert('Sorry, no results matching your request');
+          this.notify();
           this.setState({ pictures: [] });
         }
 
@@ -41,6 +48,7 @@ export default class App extends Component {
         this.setState({ status: 'rejected', error: 'Sorry, something happened, please try again later' });
       }
     }
+      
   }
 
 
@@ -58,10 +66,25 @@ export default class App extends Component {
       page: prevState.page + 1,
     }));
   };
+
+  showModal = link => {
+    this.setState({
+      imageLink: `${link}`,
+    }
+     
+    )
+  }
+
+  closeModal = () => {
+    this.setState({
+      imageLink: null,
+    })
+  }
   
 
   render() {
-    const { pictures, status, error } = this.state;
+    const { pictures, status, error, imageLink } = this.state;
+
 
     if (status === 'idle') {
       return <Searchbar onSubmit={this.handleSubmit} />
@@ -76,16 +99,20 @@ export default class App extends Component {
     }
 
     if (status === 'resolved') {
-      return (<div>
+      return (<Container>
         <Searchbar onSubmit={this.handleSubmit}/>
-        <ImageGallery pictures={pictures} />
-        <Button onLoadMore={this.loadMore}/>
-      </div>
+        <ImageGallery pictures={pictures} openModal={this.showModal}/>
+        <Button onLoadMore={this.loadMore} />
+        {imageLink &&(<Modal onClose={this.closeModal}>
+          <img src={imageLink} alt={imageLink} />
+        </Modal>)}
+        <ToastContainer
+        position="top-center"/>
+      </Container>
         
       );
     }
 
-    
   }
 
 };
