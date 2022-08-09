@@ -1,6 +1,6 @@
 import React, { Component } from "react";
 import Searchbar from "./Searchbar/Searchbar";
-import { getImages } from "./services/api";
+import { getImages, quantityPerPage } from "./services/api";
 import { ImageGallery } from "./ImageGallery/ImageGallery";
 import { Button } from "./Button/Button";
 import { Loader } from "./Loader/Loader.js";
@@ -24,6 +24,7 @@ export default class App extends Component {
   }
 
   notify = () => toast("Sorry, there is no images with this name!");
+
  
   async componentDidUpdate(_, prevState) {
     const { search, page } = this.state;
@@ -47,8 +48,7 @@ export default class App extends Component {
       } catch (error) {
         this.setState({ status: 'rejected', error: 'Sorry, something happened, please try again later' });
       }
-    }
-      
+    }   
   }
 
 
@@ -67,6 +67,7 @@ export default class App extends Component {
     }));
   };
 
+  
   showModal = link => {
     this.setState({
       imageLink: `${link}`,
@@ -83,7 +84,8 @@ export default class App extends Component {
   
 
   render() {
-    const { pictures, status, error, imageLink } = this.state;
+    const { pictures, status, error, imageLink} = this.state;
+    const lastPictures = (pictures.length / quantityPerPage) < 1;
 
 
     if (status === 'idle') {
@@ -101,8 +103,8 @@ export default class App extends Component {
     if (status === 'resolved') {
       return (<Container>
         <Searchbar onSubmit={this.handleSubmit}/>
-        <ImageGallery pictures={pictures} openModal={this.showModal}/>
-        <Button onLoadMore={this.loadMore} />
+        <ImageGallery pictures={pictures} openModal={this.showModal} />
+        {!lastPictures && (<Button onLoadMore={this.loadMore}/>)}
         {imageLink &&(<Modal onClose={this.closeModal}>
           <img src={imageLink} alt={imageLink} />
         </Modal>)}
