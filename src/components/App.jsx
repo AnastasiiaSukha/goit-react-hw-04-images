@@ -1,4 +1,4 @@
-import React, { Component } from "react";
+import React, { useState, useEffect } from "react";
 import Searchbar from "./Searchbar/Searchbar";
 import { getImages, quantityPerPage } from "./services/api";
 import { ImageGallery } from "./ImageGallery/ImageGallery";
@@ -11,85 +11,69 @@ import 'react-toastify/dist/ReactToastify.css';
 
 
 
-export default class App extends Component {
+export default function App() {
+  
+  const [search, setSearch] = useState("");
+  const [pictures, setPictures] = useState([]);
+  const [page, setPage] = useState(1);
+  const [error, setError] = useState("");
+  const [status, setStatus] = useState('idle');
+  const [imageLink, setImageLink] = useState(null);
  
-  state = {
-    search: "",
-    pictures: [],
-    page:1,
-    isLoading: false,
-    error:'',
-    status: 'idle',
-    imageLink: null,
-  }
 
-  notify = () => toast("Sorry, there is no images with this name!");
+  const notify = () => toast("Sorry, there is no images with this name!");
 
- 
-  async componentDidUpdate(_, prevState) {
-    const { search, page } = this.state;
+  useEffect(() => {
+  
+    if (!search) return;
 
+    setStatus('pending');
 
-    if (search !== prevState.search|| page !== prevState.page) {
-      this.setState({ status: 'pending', isLoading: true});
-
-      try {
-        const response = await getImages(search, page);
-
-        if (response.total === 0) {
-          this.notify();
-          this.setState({ pictures: [] });
-        }
-
-        this.setState(prevState => ({
-          status: 'resolved',
-          pictures: [...prevState.pictures, ...response.hits],
-        }));
-      } catch (error) {
-        this.setState({ status: 'rejected', error: 'Sorry, something happened, please try again later' });
+  getImages(search, page).then(
+    response => {
+      if (response.total === 0) {
+        notify();
+        setPictures([]);
       }
-    }   
-  }
+      setPictures(prevState => ([...prevState, ...response.hits]));
+      setStatus('resolved');
+      
+    }
+  ).catch(error => {
+    setError(error);
+    setStatus('rejected')
+    
+  });
+
+  },[search, page])
 
 
-  handleSubmit = text => {
-    this.setState({
-      page:1,
-      search: text,
-      pictures:[],
 
-    })
-  }
-
-  loadMore = () => {
-    this.setState(prevState => ({
-      page: prevState.page + 1,
-    }));
+  const handleSubmit = text => {
+    setPage(1);
+    setSearch(text);
+    setPictures([]);
   };
 
-  
-  showModal = link => {
-    this.setState({
-      imageLink: `${link}`,
-    }
-     
-    )
-  }
+  const loadMore = () => {
+    setPage(prevState => (prevState + 1));
+  };
 
-  closeModal = () => {
-    this.setState({
-      imageLink: null,
-    })
-  }
-  
 
-  render() {
-    const { pictures, status, error, imageLink} = this.state;
+  
+  const showModal = link => {
+    setImageLink(`${link}`)
+  };
+
+  const closeModal = () => {
+    setImageLink(null);
+  };
+  
     const lastPictures = (pictures.length / quantityPerPage) < 1;
 
 
     if (status === 'idle') {
-      return <Searchbar onSubmit={this.handleSubmit} />
+      return <Searchbar onSubmit={handleSubmit} />
     }
     
     if (status === 'pending') {
@@ -102,10 +86,10 @@ export default class App extends Component {
 
     if (status === 'resolved') {
       return (<Container>
-        <Searchbar onSubmit={this.handleSubmit}/>
-        <ImageGallery pictures={pictures} openModal={this.showModal} />
-        {!lastPictures && (<Button onLoadMore={this.loadMore}/>)}
-        {imageLink &&(<Modal onClose={this.closeModal}>
+        <Searchbar onSubmit={handleSubmit}/>
+        <ImageGallery pictures={pictures} openModal={showModal} />
+        {!lastPictures && (<Button onLoadMore={loadMore}/>)}
+        {imageLink &&(<Modal onClose={closeModal}>
           <img src={imageLink} alt={imageLink} />
         </Modal>)}
         <ToastContainer
@@ -115,6 +99,5 @@ export default class App extends Component {
       );
     }
 
-  }
 
 };

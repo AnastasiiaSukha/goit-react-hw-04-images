@@ -1,47 +1,41 @@
-import React, { Component } from "react";
+import React, { useState} from "react";
 import PropTypes from 'prop-types';
 import { SearchbarHeader, SearchForm, SearchFormButton, SearchFormInput, ButtonLabel } from "./Searchbar.styled";
 import { FiSearch } from "react-icons/fi";
 
 
-class Searchbar extends Component {
+function Searchbar({onSubmit}) {
+
+  const [inputValue, setInputValue] = useState("");
     
-    state = {
-        inputValue: "",
-    }
 
-    handelInputChange = e => (
-    this.setState({
-        inputValue: e.currentTarget.value,
-    }));
+  const handelInputChange = e => (
+    setInputValue(e.currentTarget.value));
 
 
-       handleSubmit = e => {
+  const handleSubmit = e => {
          e.preventDefault();
          
-        if (this.state.inputValue.trim() === "") {
+        if (inputValue.trim() === "") {
       return
     }
-      this.props.onSubmit(this.state.inputValue.trim());
+      onSubmit(inputValue.trim());
 
-      this.setState({
-      inputValue: '',
-      });
+    setInputValue('');
     }
 
 
-    render() {
         return (
         <SearchbarHeader>
-     <SearchForm onSubmit={this.handleSubmit}>
+     <SearchForm onSubmit={handleSubmit}>
       <SearchFormButton type="submit">
       <FiSearch size={20}> </FiSearch>     
       <ButtonLabel> Search</ButtonLabel>
     </SearchFormButton>
 
     <SearchFormInput
-      onChange={this.handelInputChange}
-      value = {this.state.inputValue}       
+      onChange={handelInputChange}
+      value = {inputValue}       
       type="text"
       autoComplete="off"
       autoFocus
@@ -50,7 +44,6 @@ class Searchbar extends Component {
   </SearchForm>
 </SearchbarHeader>
         )
-    }
 
     
 }
