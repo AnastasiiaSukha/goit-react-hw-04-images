@@ -69,35 +69,24 @@ export default function App() {
     setImageLink(null);
   };
   
-    const lastPictures = (pictures.length / quantityPerPage) < 1;
+    const lastPictures = (pictures.length / quantityPerPage) < page;
 
 
-    if (status === 'idle') {
-      return <Searchbar onSubmit={handleSubmit} />
-    }
-    
-    if (status === 'pending') {
-      return <Loader/>
-    }
- 
-    if (status === 'rejected') {
-      return console.log(error)
-    }
-
-    if (status === 'resolved') {
-      return (<Container>
-        <Searchbar onSubmit={handleSubmit}/>
-        <ImageGallery pictures={pictures} openModal={showModal} />
-        {!lastPictures && (<Button onLoadMore={loadMore}/>)}
+    return (
+      <Container>
+        <Searchbar onSubmit={handleSubmit} />
+        {status === 'pending' && <Loader />}
+        {status === 'rejected' && console.log(error)}
+        {pictures.length > 0 && (<ImageGallery pictures={pictures} openModal={showModal} />)}
         {imageLink &&(<Modal onClose={closeModal}>
           <img src={imageLink} alt={imageLink} />
         </Modal>)}
+        {status === 'resolved'&& !lastPictures && (<Button onLoadMore={loadMore}/>)}
         <ToastContainer
         position="top-center"/>
+
       </Container>
-        
-      );
-    }
+    )
 
 
 };
